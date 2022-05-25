@@ -24,7 +24,6 @@ export default class AutoCompleteWrapupPlugin extends FlexPlugin {
     ConfigureFlexStrings(flex, manager);
     RegisterFlexNotifications(flex, manager);
 
-    manager.events.addListener('pluginsLoaded', () => {
       // get the wrapupConfig config from ui_attributes
       const wrapupConfig = manager.serviceConfiguration?.ui_attributes?.autoWrapupTimer;
 
@@ -113,10 +112,11 @@ export default class AutoCompleteWrapupPlugin extends FlexPlugin {
           }
         });
 
-        flex.Actions.addListener("beforeLogout", (payload, abortOriginal) => {
-          FlexState.workerTasks.forEach(reservation => {
+        flex.Actions.addListener("beforeLogout", async (payload, abortOriginal) => {
+
+          for (const reservation of FlexState.workerTasks.values()) {
             if (reservation.status === "wrapping") {
-              flex.Actions.invokeAction('CompleteTask', { sid: reservation.sid });
+              await flex.Actions.invokeAction('CompleteTask', { sid: reservation.sid });
             }
             else if (reservation.status === "pending" || reservation.status === "assigned" || reservation.status === "accepted") {
               if (reservation.channelType === 'voice') {
@@ -131,7 +131,7 @@ export default class AutoCompleteWrapupPlugin extends FlexPlugin {
               }
               abortOriginal();
             }
-          });
+          };
         });
       }
 
@@ -140,7 +140,7 @@ export default class AutoCompleteWrapupPlugin extends FlexPlugin {
         flex.Notifications.showNotification('UnconfiguredAutoWrapupTimer');
       }
 
-    });
+    
 
   }
 }
